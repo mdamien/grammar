@@ -5,7 +5,7 @@ from grammar import Grammar
 class TestStringMethods(unittest.TestCase):
 
     def setUp(self):
-        self.G = Grammar.parse("""
+        self.G = Grammar.from_text("""
             E → TA
             A → +TA | ɛ 
             T → FB
@@ -13,14 +13,14 @@ class TestStringMethods(unittest.TestCase):
             F → (E) | a
             """)
 
-        self.G2 = Grammar.parse("""
+        self.G2 = Grammar.from_text("""
                 S → ABC
                 A → ɛ
                 B → ɛ
                 C → ABd
             """)
 
-        self.G3 = Grammar.parse("""
+        self.G3 = Grammar.from_text("""
                 S → ABC
                 A → aA | ɛ
                 B → b | ɛ
@@ -58,10 +58,25 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(G.FOLLOW("A"),{'$',')'})
         self.assertEqual(G.FOLLOW("B"),{'+','$',')'})
 
-    def test_follow_table(self):
+    def test_parse_table(self):
+        G = self.G
+        table = G.parse_table(include_conflicts=True)
+        goal_table = {
+            'A': {'+': [('A', ['+', 'T', 'A'])]
+                ,  ')': [('A', [])],'$': [('A', [])]},
+            'T': {'a': [('T', ['F', 'B'])], '(': [('T', ['F', 'B'])]},
+            'E': {'a': [('E', ['T', 'A'])], '(': [('E', ['T', 'A'])]},
+            'B': {'∗': [('B', ['∗', 'F', 'B'])],'+': [('B', [])],
+                   ')': [('B', [])], '$': [('B', [])]},
+            'F': {'a': [('F', ['a'])], '(': [('F', ['(', 'E', ')'])]}
+        }
+        self.assertEqual(table, goal_table)
+
+    def test_test(self):
         G = self.G
         G.FIRST_FOLLOW_table()
-        G.parse_table()
+        G.print_parse_table()
+        G.parse("a+a∗a")
 
 
 if __name__ == '__main__':

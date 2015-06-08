@@ -8,7 +8,7 @@ class Grammar:
         self.rules = rules
 
     @staticmethod
-    def parse(text):
+    def from_text(text):
         axiom = None
         rules = {}
         lines = [l.strip() for l in text.split('\n') if len(l.strip()) > 0]
@@ -103,24 +103,48 @@ class Grammar:
         for rule in R:
             FNE = self.FNE_rule(rule)
             if t in FNE:
-                L.append(self.rule2str(v,rule))
+                L.append((v,rule))
 
         FOLLOW = self.FOLLOW(v)
         if t in FOLLOW:
             for rule in R:
                 if self.is_list_nullable(rule):
-                    L.append(self.rule2str(v,rule))
-        return ','.join(L)
+                    L.append((v,rule))
+        return L
 
-    def parse_table(self):
+    def parse_table(self,include_conflicts=False):
+        table = {}
+        T = list(self.T())+["$"]
+        for v in self.V():
+            Vrules = {}
+            for t in T:
+                result = self.parse_table_cell(v,t)
+                if len(result) > 0:
+                    if not include_conflicts:
+                        if len(result) > 1:
+                            print("CONFLICT IGNORED!",v,t,result)
+                        Vrules[t] = result[0]
+                    else:
+                        Vrules[t] = result
+            table[v] = Vrules
+        return table
+
+    def print_parse_table(self):
         V = sorted(self.V())
-        T = sorted(self.T())
+        T = sorted(self.T())+["$"]
+
+        parse_table = self.parse_table(include_conflicts=True)
 
         table = [[" "]+list(T)]
         for v in V:
             row = [v]
             for t in T:
-                row.append(self.parse_table_cell(v,t))
+                cell = parse_table[v].get(t,None)
+                if cell:
+                    cell = ','.join(self.rule2str(*sol) for sol in cell)
+                else:
+                    cell = ""
+                row.append(cell)
             table.append(row)
 
         print()
@@ -128,6 +152,45 @@ class Grammar:
                 headers=table[0],
                 tablefmt="fancy_grid"))
         print()
+
+    def parse(self, s, limit=20):
+        if type(s) == str:
+            s = list(s)
+
+        parse_table = self.parse_table()
+        table = [["(top) stack",'parse','action'],]
+        stack = [self.axiom,"$"]
+        to_parse = s+["$"]
+
+        try:
+            while limit > 0:
+                to_parse0 = to_parse[0]
+                stack0 = stack[0]
+                row = [''.join(stack),''.join(to_parse)]
+                action = ""
+                if stack0 == to_parse0:
+                    if stack0 == "$":
+                        action = "accept"
+                    else:
+                        action = "match"
+                        stack = stack[1:]
+                        to_parse = to_parse[1:]
+                else:
+                    v,rule = parse_table[stack0][to_parse0]
+                    action = "apply "+self.rule2str(v, rule)
+                    stack = rule+stack[1:]
+                row.append(action)
+                table.append(row)
+                limit -= 1
+                if action == "accept":
+                    break
+        finally:
+            print()
+            print(tabulate(table[1:],
+                    headers=table[0],
+                    stralign="right",
+                    tablefmt="fancy_grid"))
+            print()
 
     def FIRST_FOLLOW_table(self):
         table = [["",'FNE','FOLLOW'],]
