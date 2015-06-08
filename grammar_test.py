@@ -58,6 +58,11 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(G.FOLLOW("A"),{'$',')'})
         self.assertEqual(G.FOLLOW("B"),{'+','$',')'})
 
+    def test_follow_table(self):
+        G = self.G
+        G.FIRST_FOLLOW_table()
+        G.parse_table()
+
 
 if __name__ == '__main__':
     unittest.main()
