@@ -38,6 +38,9 @@ class Grammar:
                 return True
         return False
 
+    def is_list_nullable(self,l):
+        return all(self.is_nullable(x) for x in l)
+
     def FNE(self, x):
         if self.is_terminal(x):
             return {x}
@@ -52,3 +55,28 @@ class Grammar:
                     break
         return FNE
 
+    def FOLLOW(self, x):
+        if self.is_terminal(x):
+            return {x}
+        FOLLOW = set()
+
+        #rule 1
+        if x == self.axiom:
+            FOLLOW.add("$")
+
+        for V in self.V():
+            for rule in self.rules[V]:
+                for i, symbol in enumerate(rule):
+                    if symbol == x:
+                        if i+1 < len(rule):
+                            #rule 2
+                            symbol_next = rule[i+1]
+                            FOLLOW |= self.FNE(symbol_next)
+
+                        #rule 3
+                        all_next = rule[i+1:]
+                        if self.is_list_nullable(all_next):
+                            if V != x:
+                                FOLLOW |= self.FOLLOW(V)
+
+        return FOLLOW

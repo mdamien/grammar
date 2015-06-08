@@ -2,8 +2,6 @@ import unittest
 
 from grammar import Grammar
 
-
-
 class TestStringMethods(unittest.TestCase):
 
     def setUp(self):
@@ -52,8 +50,14 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(G.FNE("A"),{'a'})
         self.assertEqual(G.FNE("S"),{'a','b','c','d'})
 
+    def test_FOLLOW(self):
+        G = self.G
+        self.assertEqual(G.FOLLOW("E"),{'$',')'})
+        self.assertEqual(G.FOLLOW("T"),{'+','$',')'})
+        self.assertEqual(G.FOLLOW("F"),{'∗','+','$',')'})
+        self.assertEqual(G.FOLLOW("A"),{'$',')'})
+        self.assertEqual(G.FOLLOW("B"),{'+','$',')'})
+
+
 if __name__ == '__main__':
     unittest.main()
-
-print(G.rules)
-print(G.is_nullable("B"))
