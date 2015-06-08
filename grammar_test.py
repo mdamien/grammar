@@ -72,12 +72,12 @@ class TestStringMethods(unittest.TestCase):
         }
         self.assertEqual(table, goal_table)
 
-    def test_test(self):
+    def test_parse(self):
         G = self.G
-        G.FIRST_FOLLOW_table()
-        G.print_parse_table()
-        G.parse("a+a∗a")
+        self.assertTrue(G.parse("a+a∗a",print_steps=False))
 
+    def test_stats(self):
+        G = self.G3
 
 if __name__ == '__main__':
     unittest.main()

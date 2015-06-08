@@ -95,7 +95,12 @@ class Grammar:
         return FOLLOW
 
     def rule2str(self, v, rule):
-        return '→'.join([v,''.join(rule) if len(rule) > 0 else "ɛ"])
+        return ' → '.join([v,''.join(rule) if len(rule) > 0 else "ɛ"])
+
+    def vrules2str(self, v):
+        rules = [''.join(rule) if len(rule) > 0 else "ɛ" for rule in self.rules[v]]
+        return ' → '.join((v,' | '.join(rules)))
+
 
     def parse_table_cell(self,v,t):
         L = []
@@ -153,7 +158,7 @@ class Grammar:
                 tablefmt="fancy_grid"))
         print()
 
-    def parse(self, s, limit=20):
+    def parse(self, s, limit=50, print_steps=True):
         if type(s) == str:
             s = list(s)
 
@@ -162,8 +167,11 @@ class Grammar:
         stack = [self.axiom,"$"]
         to_parse = s+["$"]
 
+        final_action_is_accept = False
+
         try:
             while limit > 0:
+                need_to_break = False
                 to_parse0 = to_parse[0]
                 stack0 = stack[0]
                 row = [''.join(stack),''.join(to_parse)]
@@ -171,26 +179,34 @@ class Grammar:
                 if stack0 == to_parse0:
                     if stack0 == "$":
                         action = "accept"
+                        need_to_break = True
+                        final_action_is_accept = True
                     else:
                         action = "match"
                         stack = stack[1:]
                         to_parse = to_parse[1:]
                 else:
-                    v,rule = parse_table[stack0][to_parse0]
-                    action = "apply "+self.rule2str(v, rule)
-                    stack = rule+stack[1:]
+                    if self.is_terminal(stack0):
+                        action = "parsing error"
+                        need_to_break = True
+                    else:
+                        v,rule = parse_table[stack0][to_parse0]
+                        action = "apply "+self.rule2str(v, rule)
+                        stack = rule+stack[1:]
                 row.append(action)
                 table.append(row)
                 limit -= 1
-                if action == "accept":
+                if need_to_break:
                     break
         finally:
-            print()
-            print(tabulate(table[1:],
-                    headers=table[0],
-                    stralign="right",
-                    tablefmt="fancy_grid"))
-            print()
+            if print_steps:
+                print()
+                print(tabulate(table[1:],
+                        headers=table[0],
+                        stralign="right",
+                        tablefmt="fancy_grid"))
+                print()
+        return final_action_is_accept
 
     def FIRST_FOLLOW_table(self):
         table = [["",'FNE','FOLLOW'],]
@@ -207,4 +223,20 @@ class Grammar:
         print(tabulate(table[1:],
                 headers=table[0],
                 tablefmt="fancy_grid"))
+        print()
+
+    def print_grammar(self):
+        print("Axiom:",self.axiom)
+        print("Terminals:",','.join(sorted(self.T())))
+        print("Non-Terminals:",','.join(sorted(self.V())))
+        print("Rules:")
+        for v in sorted(self.V()):
+            print(self.vrules2str(v))
+
+    def stats(self):
+        print()
+        print("STATS")
+        self.print_grammar()
+        self.FIRST_FOLLOW_table()
+        self.print_parse_table()
         print()
