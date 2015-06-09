@@ -227,8 +227,8 @@ class Grammar:
 
     def print_grammar(self):
         print("Axiom:",self.axiom)
-        print("Terminals:",','.join(sorted(self.T())))
-        print("Non-Terminals:",','.join(sorted(self.V())))
+        print("Terminals:",' '.join(sorted(self.T())))
+        print("Non-Terminals:",' '.join(sorted(self.V())))
         print("Rules:")
         for v in sorted(self.V()):
             print(self.vrules2str(v))
@@ -238,5 +238,17 @@ class Grammar:
         print("STATS")
         self.print_grammar()
         self.FIRST_FOLLOW_table()
+        print("Parsing table:")
         self.print_parse_table()
         print()
+
+if __name__ == '__main__':
+    G = Grammar.from_text("""
+            E → TA
+            A → +TA | ɛ 
+            T → FB
+            B → ∗FB | ɛ
+            F → (E) | a
+            """)
+    G.stats()
+    G.parse("a+a∗a")
