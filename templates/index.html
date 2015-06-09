@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="utf-8">
+ <title>Grammar</title>
+ <link rel="stylesheet" href="http://bootswatch.com/lumen/bootstrap.min.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Grammar</h1>
+    <h4><a href="http://github.com/mdamien/grammar">github.com/mdamien/grammar</a></h4>
+    <hr/>
+    <form action="" method="get" class="form-horizontal">
+    <div class="form-group">
+        <label for="to_parse">Grammar:</label>
+        <textarea class="form-control" rows="5" name="input">{{ input }}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="to_parse">String to parse:</label>
+        <input type="text" class="form-control" name="to_parse" value="{{ to_parse }}"/>
+    </div>
+    <div class="form-group">
+        <span class="help-block">Production rules in a form like this: F → (E) | a</span>
+    </div>
+    <input type="submit" class="btn btn-primary btn-lg btn-block" value="Parse it!"/>
+    </form>
+    <hr>
+    <pre>{{ output }}</pre>
+  </div>
+</body>
+</html>

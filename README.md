@@ -1,7 +1,7 @@
 ### grammar
 Implementing Stanford CS143 concepts
 
-Tested on `python 3.4`. Needs `tabulate` (`pip3 install tabulate`)
+Tested on `python 3.4`. `pip3 install -r requirements.txt`
 
 ```
 >>> from grammar import Grammar

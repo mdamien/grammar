@@ -242,13 +242,13 @@ class Grammar:
         self.print_parse_table()
         print()
 
+example = """E → TA
+A → +TA | ɛ 
+T → FB
+B → ∗FB | ɛ
+F → (E) | a"""
+
 if __name__ == '__main__':
-    G = Grammar.from_text("""
-            E → TA
-            A → +TA | ɛ 
-            T → FB
-            B → ∗FB | ɛ
-            F → (E) | a
-            """)
+    G = Grammar.from_text(example)
     G.stats()
     G.parse("a+a∗a")
