@@ -2,7 +2,13 @@ import itertools
 
 from tabulate import tabulate
 
-#TODO: tree, simple tree traversal with grammar output example
+"""
+Done: LL(1)
+TODO:
+- LR(0)
+- SLR(1)
+- parse tree + tree traversal with grammar output example
+"""
 
 class Grammar:
     def __init__(self, axiom, rules):
