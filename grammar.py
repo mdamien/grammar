@@ -5,7 +5,8 @@ from tabulate import tabulate
 """
 Done: LL(1)
 TODO:
-- LR(0)
+- WTF is LR(0) / LL(0) analysis
+- LR(1)
 - SLR(1)
 - parse tree + tree traversal with grammar output example
 """
@@ -184,23 +185,28 @@ class Grammar:
                 stack0 = stack[0]
                 row = [''.join(stack),''.join(to_parse)]
                 action = ""
-                if stack0 == to_parse0:
-                    if stack0 == "$":
-                        action = "accept"
-                        need_to_break = True
-                        final_action_is_accept = True
+                try:
+                    if stack0 == to_parse0:
+                        if stack0 == "$":
+                            action = "accept"
+                            need_to_break = True
+                            final_action_is_accept = True
+                        else:
+                            action = "match"
+                            stack = stack[1:]
+                            to_parse = to_parse[1:]
                     else:
-                        action = "match"
-                        stack = stack[1:]
-                        to_parse = to_parse[1:]
-                else:
-                    if self.is_terminal(stack0) or to_parse0 == "$":
-                        action = "parsing error"
-                        need_to_break = True
-                    else:
-                        v,rule = parse_table[stack0][to_parse0]
-                        action = "apply "+self.rule2str(v, rule)
-                        stack = rule+stack[1:]
+                        if self.is_terminal(stack0) or to_parse0 == "$":
+                            action = "parsing error"
+                            need_to_break = True
+                        else:
+                            v,rule = parse_table[stack0][to_parse0]
+                            action = "apply "+self.rule2str(v, rule)
+                            stack = rule+stack[1:]
+                except Exception as e:
+                    action = "Exception occured"
+                    print("Exception:",repr(e))
+                    need_to_break = True
                 row.append(action)
                 table.append(row)
                 limit -= 1

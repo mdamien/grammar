@@ -22,8 +22,11 @@ def hello_world():
     to_parse = request.args.get('to_parse',"a+a∗a")
     G = grammar.Grammar.from_text(input)
     with Capturing() as output:
-        G.stats()
-        G.parse(to_parse)
+        try:
+            G.stats()
+            G.parse(to_parse)
+        except Exception as e:
+            print(e)
     return render_template('index.html', input=input,
             to_parse=to_parse, output='\n'.join(output))
 
