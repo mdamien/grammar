@@ -186,7 +186,7 @@ class Grammar:
                         stack = stack[1:]
                         to_parse = to_parse[1:]
                 else:
-                    if self.is_terminal(stack0):
+                    if self.is_terminal(stack0) or to_parse0 == "$":
                         action = "parsing error"
                         need_to_break = True
                     else:

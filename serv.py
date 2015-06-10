@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 import grammar
+import os
 
 app = Flask(__name__)
 
@@ -27,4 +28,4 @@ def hello_world():
             to_parse=to_parse, output='\n'.join(output))
 
 if __name__ == '__main__':
-    app.run(port=8080)
+    app.run(port=8080, debug=os.getenv("PROD") == None)
