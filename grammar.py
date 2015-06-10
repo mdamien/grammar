@@ -2,6 +2,8 @@ import itertools
 
 from tabulate import tabulate
 
+#TODO: tree, simple tree traversal with grammar output example
+
 class Grammar:
     def __init__(self, axiom, rules):
         self.axiom = axiom
@@ -209,14 +211,14 @@ class Grammar:
         return final_action_is_accept
 
     def FIRST_FOLLOW_table(self):
-        table = [["",'FNE','FOLLOW'],]
+        table = [["",'FIRST','FOLLOW'],]
 
         formatset = lambda s: ','.join(sorted(s))
 
         for V in sorted(self.V()):
             table.append([
                 V,
-                formatset(self.FNE(V)),
+                formatset([ 'ɛ' if x == '' else x for x in sorted(self.FIRST(V))]),
                 formatset(self.FOLLOW(V))
             ])
         print()
