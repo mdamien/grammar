@@ -6,6 +6,7 @@ from tabulate import tabulate
 Done: LL(1)
 TODO:
 - WTF is LR(0) / LL(0) analysis
+- LR(0)
 - LR(1)
 - SLR(1)
 - parse tree + tree traversal with grammar output example
@@ -255,6 +256,10 @@ class Grammar:
         print("Parsing table:")
         self.print_parse_table()
         print()
+
+    def LR0_states(self):
+        states = []
+        S0 = self.closure(self.axiom)
 
 example = """E → TA
 A → +TA | ɛ 

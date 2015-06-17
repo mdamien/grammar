@@ -31,4 +31,5 @@ def hello_world():
             to_parse=to_parse, output='\n'.join(output))
 
 if __name__ == '__main__':
-    app.run(port=8080, debug=os.getenv("PROD") == None)
+    debug = os.getenv("PROD") == None
+    app.run(port=8080, debug=debug)

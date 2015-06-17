@@ -27,6 +27,10 @@ class TestStringMethods(unittest.TestCase):
                 C → c | d
             """)
 
+        self.G4 = Grammar.from_text("""
+                S' → S
+                S → (S) | a
+            """)
     def test_V_T(self):
         G = self.G
         self.assertEqual(len(G.V()),5)
@@ -75,6 +79,10 @@ class TestStringMethods(unittest.TestCase):
     def test_parse(self):
         G = self.G
         self.assertTrue(G.parse("a+a∗a",print_steps=False))
+
+    def test_LR0(self):
+        G = self.G4
+        G.LR0_states()
 
     def test_stats(self):
         G = self.G3
