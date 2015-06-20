@@ -2,21 +2,21 @@ import unittest
 
 from grammar import Grammar
 
-class TestStringMethods(unittest.TestCase):
+class TestGrammar(unittest.TestCase):
 
     def setUp(self):
         self.G = Grammar.from_text("""
-            E → TA
-            A → +TA | ɛ 
-            T → FB
-            B → ∗FB | ɛ
-            F → (E) | a
+                E → TA
+                A → +TA | ɛ 
+                T → FB
+                B → ∗FB | ɛ
+                F → (E) | a
             """)
 
         self.G2 = Grammar.from_text("""
                 S → ABC
                 A → ɛ
-                B → ɛ
+                B -> ɛ
                 C → ABd
             """)
 
@@ -28,7 +28,6 @@ class TestStringMethods(unittest.TestCase):
             """)
 
         self.G4 = Grammar.from_text("""
-                S' → S
                 S → (S) | a
             """)
     def test_V_T(self):
@@ -80,12 +79,19 @@ class TestStringMethods(unittest.TestCase):
         G = self.G
         self.assertTrue(G.parse("a+a∗a",print_steps=False))
 
-    def test_LR0(self):
+    def test_lr0(self):
         G = self.G4
-        G.LR0_states()
+        print(G.rules_list())
+        print(G.lr0())
+        I0 = G.lr0_closure("S'")
+        Is = [I0] + [G.goto(I0, X) for X in ('S','(','a')]
+        for i, q in enumerate(Is):
+            print('I'+str(i),'; '.join(G.state2str(q)))
+ 
 
     def test_stats(self):
-        G = self.G3
+        G = self.G
+        G.stats()
 
 if __name__ == '__main__':
     unittest.main()

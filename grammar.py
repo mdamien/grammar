@@ -3,9 +3,7 @@ import itertools
 from tabulate import tabulate
 
 """
-Done: LL(1)
 TODO:
-- WTF is LR(0) / LL(0) analysis
 - LR(0)
 - LR(1)
 - SLR(1)
@@ -13,6 +11,10 @@ TODO:
 """
 
 class Grammar:
+    ARROW = '→'
+    EPSILON = 'ɛ'
+    BULLET = '•'
+
     def __init__(self, axiom, rules):
         self.axiom = axiom
         self.rules = rules
@@ -23,10 +25,11 @@ class Grammar:
         rules = {}
         lines = [l.strip() for l in text.split('\n') if len(l.strip()) > 0]
         for line in lines:
-            V, Vrules = [x.strip() for x in line.split('→')]
+            arrow = Grammar.ARROW if Grammar.ARROW in line else '->'
+            V, Vrules = [x.strip() for x in line.split(arrow)]
             if not axiom:
                 axiom = V
-            Vrules = [list(x.strip().replace('ɛ','')) for x in Vrules.split('|')]
+            Vrules = [list(x.strip().replace(Grammar.EPSILON,'')) for x in Vrules.split('|')]
             rules[V] = Vrules
         return Grammar(axiom=axiom, rules=rules)
 
@@ -35,6 +38,9 @@ class Grammar:
 
     def is_terminal(self, x):
         return x not in self.V()
+
+    def is_non_terminal(self, x):
+        return x in self.V()
 
     def T(self): #terminals
         flat = lambda L: itertools.chain(*L)
@@ -105,12 +111,11 @@ class Grammar:
         return FOLLOW
 
     def rule2str(self, v, rule):
-        return ' → '.join([v,''.join(rule) if len(rule) > 0 else "ɛ"])
+        return (' '+Grammar.ARROW+' ').join([v,''.join(rule) if len(rule) > 0 else Grammar.EPSILON])
 
     def vrules2str(self, v):
-        rules = [''.join(rule) if len(rule) > 0 else "ɛ" for rule in self.rules[v]]
-        return ' → '.join((v,' | '.join(rules)))
-
+        rules = [''.join(rule) if len(rule) > 0 else Grammar.EPSILON for rule in self.rules[v]]
+        return (' '+Grammar.ARROW+' ').join((v,' | '.join(rules)))
 
     def parse_table_cell(self,v,t):
         L = []
@@ -197,7 +202,7 @@ class Grammar:
                             stack = stack[1:]
                             to_parse = to_parse[1:]
                     else:
-                        if self.is_terminal(stack0) or to_parse0 == "$":
+                        if self.is_terminal(stack0):
                             action = "parsing error"
                             need_to_break = True
                         else:
@@ -231,7 +236,7 @@ class Grammar:
         for V in sorted(self.V()):
             table.append([
                 V,
-                formatset([ 'ɛ' if x == '' else x for x in sorted(self.FIRST(V))]),
+                formatset([ Grammar.EPSILON if x == '' else x for x in sorted(self.FIRST(V))]),
                 formatset(self.FOLLOW(V))
             ])
         print()
@@ -257,9 +262,51 @@ class Grammar:
         self.print_parse_table()
         print()
 
-    def LR0_states(self):
-        states = []
-        S0 = self.closure(self.axiom)
+    def rules_list(self):
+        L = []
+        for R in sorted(self.rules):
+            items = self.rules[R]
+            for r in sorted(''.join(x) for x in items):
+                L.append((R,r))
+        return L
+
+    def lr0(self):
+        if "S'" not in self.rules:
+            self.rules["S'"] = [self.axiom]
+        return "lol_lr0"
+
+    def lr0_closure(self,x):
+        state = []
+        kernel = "S'",self.rules["S'"],0
+        R, rule, i = kernel
+        state.append(kernel)
+        right = rule[i:]
+        right0 = right[0]
+        if self.is_non_terminal(right0):
+            for rule2 in self.rules[right0]:
+                state.append((right0, rule2,0))
+        return state
+
+    def goto(self, q, X):
+        state = []
+        for item in q:
+            R, rule, i = item
+            right = rule[i:]
+            right0 = right[0]
+            if right0 == X:
+                nq = R, rule, i+1
+                state.append(nq)
+        return state
+
+    def state2str(self, q):
+        out = []
+        for state in q:
+            R, rule, i = state
+            nrule = rule[:i]
+            nrule.append(Grammar.BULLET)
+            nrule += rule[i:]
+            out.append(self.rule2str(R, nrule))
+        return out
 
 example = """E → TA
 A → +TA | ɛ 
