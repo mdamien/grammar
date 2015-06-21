@@ -307,21 +307,37 @@ class Grammar:
 
         def hash_state(x):
             return ';'.join(self.state2str(x))
-        def add(x,myIs):
-            myIs[hash_state(x)] = x
+
+        def add(x,myIs, origin=None, transition=None):
+            h = hash_state(x)
+            if h in myIs:
+                el = myIs[h]
+            else:
+                el = myIs[h] = {
+                    'state':x,
+                    'origin':set(),
+                    'transition':set(),
+                }
+            if origin:
+                ho = hash_state(origin)
+                el['origin'].add(ho)
+                el['transition'].add(transition)
+
+        def states(Is):
+            return [x['state'] for x in Is.values()]
 
         Is = {}
         add(I0, Is)
 
         for i in range(10):
             newIs = {k:v for k,v in Is.items()}
-            for I in Is.values():
-                genIs = [self.lr0_goto(I, X) for X in symboles]
-                genIs = [x for x in genIs if len(x) > 0]
-                genIs = [self.lr0_closure(x) for x in genIs]
-                [add(x,newIs) for x in genIs]
+            for I in states(Is):
+                genIs = [(self.lr0_goto(I, X), X) for X in symboles]
+                genIs = [(x, X) for x, X in genIs if len(x) > 0]
+                genIs = [(self.lr0_closure(x),X) for x, X in genIs]
+                [add(x,newIs, I, X) for x, X in genIs]
             Is = newIs
-        return Is.values()
+        return Is
 
 example = """E → TA
 A → +TA | ɛ 

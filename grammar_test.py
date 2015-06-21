@@ -1,6 +1,8 @@
 import unittest
 
 from grammar import Grammar
+from pprint import pprint as pp
+
 
 class TestGrammar(unittest.TestCase):
 
@@ -81,9 +83,7 @@ class TestGrammar(unittest.TestCase):
 
     def test_lr0(self):
         G = self.G4
-        for i, q in enumerate(G.lr0_states()):
-            print('I'+str(i),'; '.join(G.state2str(q)))
- 
+        pp(G.lr0_states())
 
     def test_stats(self):
         G = self.G
