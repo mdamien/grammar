@@ -1,6 +1,7 @@
 import itertools
 
 from tabulate import tabulate
+from pprint import pprint as pp
 
 """
 TODO:
@@ -267,7 +268,6 @@ class Grammar:
     def lr0_closure(self,kernels):
         state = []
         for kernel in kernels:
-            print('k',kernel)
             state.append(kernel)
             R, rule, i = kernel
             right = rule[i:]
@@ -276,7 +276,6 @@ class Grammar:
                 if self.is_non_terminal(right0):
                     for rule2 in self.rules[right0]:
                         state.append((right0, rule2,0))
-        print('closed',state)
         return state
 
     def lr0_goto(self, q, X):
@@ -284,10 +283,11 @@ class Grammar:
         for item in q:
             R, rule, i = item
             right = rule[i:]
-            right0 = right[0]
-            if right0 == X:
-                nq = R, rule, i+1
-                state.append(nq)
+            if right:
+                right0 = right[0]
+                if right0 == X:
+                    nq = R, rule, i+1
+                    state.append(nq)
         return state
 
     def state2str(self, q):
@@ -301,10 +301,27 @@ class Grammar:
         return out
 
     def lr0_states(self):
+        symboles = self.V() | self.T()
         I0_kernel = [("S'",[self.axiom],0)]
         I0 = self.lr0_closure(I0_kernel)
-        Is = [I0] + [self.lr0_closure(self.lr0_goto(I0, X)) for X in ('S','(','a')]
-        return Is
+
+        def hash_state(x):
+            return ';'.join(self.state2str(x))
+        def add(x,myIs):
+            myIs[hash_state(x)] = x
+
+        Is = {}
+        add(I0, Is)
+
+        for i in range(10):
+            newIs = {k:v for k,v in Is.items()}
+            for I in Is.values():
+                genIs = [self.lr0_goto(I, X) for X in symboles]
+                genIs = [x for x in genIs if len(x) > 0]
+                genIs = [self.lr0_closure(x) for x in genIs]
+                [add(x,newIs) for x in genIs]
+            Is = newIs
+        return Is.values()
 
 example = """E → TA
 A → +TA | ɛ 
