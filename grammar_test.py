@@ -81,11 +81,7 @@ class TestGrammar(unittest.TestCase):
 
     def test_lr0(self):
         G = self.G4
-        print(G.rules_list())
-        print(G.lr0())
-        I0 = G.lr0_closure("S'")
-        Is = [I0] + [G.goto(I0, X) for X in ('S','(','a')]
-        for i, q in enumerate(Is):
+        for i, q in enumerate(G.lr0_states()):
             print('I'+str(i),'; '.join(G.state2str(q)))
  
 

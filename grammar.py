@@ -262,32 +262,24 @@ class Grammar:
         self.print_parse_table()
         print()
 
-    def rules_list(self):
-        L = []
-        for R in sorted(self.rules):
-            items = self.rules[R]
-            for r in sorted(''.join(x) for x in items):
-                L.append((R,r))
-        return L
+    ###### LR(0)
 
-    def lr0(self):
-        if "S'" not in self.rules:
-            self.rules["S'"] = [self.axiom]
-        return "lol_lr0"
-
-    def lr0_closure(self,x):
+    def lr0_closure(self,kernels):
         state = []
-        kernel = "S'",self.rules["S'"],0
-        R, rule, i = kernel
-        state.append(kernel)
-        right = rule[i:]
-        right0 = right[0]
-        if self.is_non_terminal(right0):
-            for rule2 in self.rules[right0]:
-                state.append((right0, rule2,0))
+        for kernel in kernels:
+            print('k',kernel)
+            state.append(kernel)
+            R, rule, i = kernel
+            right = rule[i:]
+            if right:
+                right0 = right[0]
+                if self.is_non_terminal(right0):
+                    for rule2 in self.rules[right0]:
+                        state.append((right0, rule2,0))
+        print('closed',state)
         return state
 
-    def goto(self, q, X):
+    def lr0_goto(self, q, X):
         state = []
         for item in q:
             R, rule, i = item
@@ -307,6 +299,12 @@ class Grammar:
             nrule += rule[i:]
             out.append(self.rule2str(R, nrule))
         return out
+
+    def lr0_states(self):
+        I0_kernel = [("S'",[self.axiom],0)]
+        I0 = self.lr0_closure(I0_kernel)
+        Is = [I0] + [self.lr0_closure(self.lr0_goto(I0, X)) for X in ('S','(','a')]
+        return Is
 
 example = """E → TA
 A → +TA | ɛ 
