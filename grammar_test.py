@@ -32,6 +32,12 @@ class TestGrammar(unittest.TestCase):
         self.G4 = Grammar.from_text("""
                 S → (S) | a
             """)
+
+        self.G5 = Grammar.from_text("""
+                S → Aa | Bb | ac
+                A → a
+                B → a
+            """)
     def test_V_T(self):
         G = self.G
         self.assertEqual(len(G.V()),5)
@@ -83,11 +89,17 @@ class TestGrammar(unittest.TestCase):
 
     def test_lr0(self):
         G = self.G4
-        pp(G.lr0_states())
+        self.assertEqual(G.state2strstr([("S'", ['S'], 1)]),"S' → S•")
+        states = G.lr0_states()
+        self.assertEqual(len(states),6)
+
+        G = self.G5
+        states = G.lr0_states()
+        self.assertEqual(len(states),8)
 
     def test_stats(self):
         G = self.G
-        G.stats()
+        #G.stats()
 
 if __name__ == '__main__':
     unittest.main()

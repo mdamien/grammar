@@ -5,7 +5,8 @@ from pprint import pprint as pp
 
 """
 TODO:
-- LR(0)
+- detect grammar conflicts (LL(1), LR(0),..)
+- LR(0) parse
 - LR(1)
 - SLR(1)
 - parse tree + tree traversal with grammar output example
@@ -258,9 +259,13 @@ class Grammar:
         print()
         print("STATS")
         self.print_grammar()
+        print("FIRST/FOLLOW table:")
         self.FIRST_FOLLOW_table()
-        print("Parsing table:")
+        print("LL(1) parse table:")
         self.print_parse_table()
+        print("LR(0) parse graph:")
+        states = self.lr0_states()
+        self.lr0_pp(states)
         print()
 
     ###### LR(0)
@@ -275,7 +280,9 @@ class Grammar:
                 right0 = right[0]
                 if self.is_non_terminal(right0):
                     for rule2 in self.rules[right0]:
-                        state.append((right0, rule2,0))
+                        nq = (right0, rule2,0)
+                        closured = self.lr0_closure([nq])
+                        state += closured
         return state
 
     def lr0_goto(self, q, X):
@@ -290,38 +297,46 @@ class Grammar:
                     state.append(nq)
         return state
 
+    def sstate2str(self, q):
+        R, rule, i = q
+        nrule = rule[:i]
+        nrule.append(Grammar.BULLET)
+        nrule += rule[i:]
+        return self.rule2str(R, nrule)
+
     def state2str(self, q):
-        out = []
-        for state in q:
-            R, rule, i = state
-            nrule = rule[:i]
-            nrule.append(Grammar.BULLET)
-            nrule += rule[i:]
-            out.append(self.rule2str(R, nrule))
-        return out
+        return [self.sstate2str(x) for x in q]
+
+    def state2strstr(self, q):
+        return ';'.join(self.state2str(q))
 
     def lr0_states(self):
-        symboles = self.V() | self.T()
+        symboles = sorted(self.V() | self.T())
         I0_kernel = [("S'",[self.axiom],0)]
         I0 = self.lr0_closure(I0_kernel)
 
+        hash_to_state = {}
+
         def hash_state(x):
-            return ';'.join(self.state2str(x))
+            return self.state2strstr(x)
 
         def add(x,myIs, origin=None, transition=None):
             h = hash_state(x)
-            if h in myIs:
-                el = myIs[h]
+            if h in hash_to_state:
+                el = myIs[hash_to_state[h]]
             else:
-                el = myIs[h] = {
+                hash_to_state[h] = add.N
+                el = myIs[add.N] = {
                     'state':x,
                     'origin':set(),
                     'transition':set(),
+                    'N':add.N,
                 }
-            if origin:
-                ho = hash_state(origin)
-                el['origin'].add(ho)
+                add.N += 1
+            if origin != None:
+                el['origin'].add(origin)
                 el['transition'].add(transition)
+        add.N = 0
 
         def states(Is):
             return [x['state'] for x in Is.values()]
@@ -329,15 +344,28 @@ class Grammar:
         Is = {}
         add(I0, Is)
 
-        for i in range(10):
+        while True:
             newIs = {k:v for k,v in Is.items()}
-            for I in states(Is):
+            for k,v in Is.items():
+                I = v["state"]
                 genIs = [(self.lr0_goto(I, X), X) for X in symboles]
                 genIs = [(x, X) for x, X in genIs if len(x) > 0]
                 genIs = [(self.lr0_closure(x),X) for x, X in genIs]
-                [add(x,newIs, I, X) for x, X in genIs]
+                [add(x, newIs, k, X) for x, X in genIs]
+            if len(Is) == len(newIs):
+                Is = newIs
+                break
             Is = newIs
         return Is
+
+    def lr0_pp(self, states):
+        items = sorted(states.items(), key=lambda x:x[1]['N'])
+        for k,v in items:
+            print("I"+str(v['N']),self.state2strstr(v['state']))
+            if len(v['origin']) > 0:
+                print("   from",v['origin'])
+            if len(v['transition']) > 0:
+                print("   transition",','.join(map(repr,v['transition'])))
 
 example = """E → TA
 A → +TA | ɛ 
