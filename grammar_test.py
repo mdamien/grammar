@@ -93,9 +93,17 @@ class TestGrammar(unittest.TestCase):
         states = G.lr0_states()
         self.assertEqual(len(states),6)
 
+        G.lr0_pp(states)
+        G.lr0_parse("((a))")
+
         G = self.G5
         states = G.lr0_states()
         self.assertEqual(len(states),8)
+
+    def test_slr1(self):
+        G = self.G5
+        states = G.lr0_states()
+        #G.slr1_table(states)
 
     def test_stats(self):
         G = self.G

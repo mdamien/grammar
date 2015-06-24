@@ -7,8 +7,9 @@ from pprint import pprint as pp
 TODO:
 - detect grammar conflicts (LL(1), LR(0),..)
 - LR(0) parse
-- LR(1)
+- LR(1) - action table
 - SLR(1)
+- LALR(1)
 - parse tree + tree traversal with grammar output example
 """
 
@@ -358,6 +359,82 @@ class Grammar:
             Is = newIs
         return Is
 
+
+    def lr0_parse(self, s, limit=50, print_steps=True):
+        if type(s) == str:
+            s = list(s)
+
+        states = self.lr0_states()
+
+        def is_reduce_item(item):
+            R, rule, i = item
+            return len(rule) == i
+
+        def is_shift_item(item):
+            return not is_reduce_item(item)
+
+        def find_transition(curr, symbol):
+            for k, state in states.items():
+                if curr in state['origin'] and symbol in state['transition']:
+                    return k
+
+        table = [["(top) stack",'stack2','parse','action'],]
+
+        curr_state = 0
+
+        s.append('$')
+
+        stack = [0]
+        stack2 = ['$']
+
+        try:
+            for i in range(20):
+                s0 = s[0]
+                new_state = find_transition(curr_state, s0)
+                #SHIFT
+                if new_state:
+                    stack.append(new_state)
+                    stack2.append(s0)
+                    s = s[1:]
+                    table.append([
+                        ''.join(map(str,stack)),
+                        ''.join(map(str,stack2)),
+                        ''.join(s),
+                        "shift "+str(new_state)
+                        ])
+                    curr_state = new_state
+                else:
+                    state_infos = states[curr_state]
+                    pp(state_infos)
+                    #REDUCE
+                    reduce_items = [it for it in state_infos['state']
+                        if is_reduce_item(it)]
+                    print(reduce_items)
+                    if len(reduce_items) > 0:
+                        if len(reduce_items) > 1:
+                            print("WHAT, multiple reduce items", reduce_items)
+                        reduce_item = reduce_items[0]
+                        for it in reduce_item:
+                            print(it,stack)
+                            stack.pop()
+                            stack2.pop()
+                        stack.append(4)
+                        curr_state = 4
+                        stack2.append("S")
+                        table.append([
+                            ''.join(map(str,stack)),
+                            ''.join(map(str,stack2)),
+                            ''.join(s),
+                            "reduce "+self.sstate2str(reduce_item)
+                            ])
+        finally:
+            print()
+            print(tabulate(table[1:],
+                    headers=table[0],
+                    stralign="right",
+                    tablefmt="fancy_grid"))
+            print()
+
     def lr0_pp(self, states):
         items = sorted(states.items(), key=lambda x:x[1]['N'])
         for k,v in items:
@@ -366,6 +443,20 @@ class Grammar:
                 print("   from",v['origin'])
             if len(v['transition']) > 0:
                 print("   transition",','.join(map(repr,v['transition'])))
+
+    def slr1_table(self, lr0_states):
+        V = self.V()
+        def find_transition(v):
+            for k,x in lr0_states.items():
+                if v in x['transition']:
+                    return k,self.state2str(x['state'])
+        GOTO = {v:find_transition(v) for v in V}
+        print("GOTO",GOTO)
+        for state in sorted(lr0_states):
+            print(state)
+            item = lr0_states[state]
+            for rule in item['state']:
+                print(rule,end=',\n')
 
 example = """E → TA
 A → +TA | ɛ 
