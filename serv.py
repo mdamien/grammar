@@ -22,9 +22,27 @@ def hello_world():
     to_parse = request.args.get('to_parse',"a+a∗a")
     G = grammar.Grammar.from_text(input)
     with Capturing() as output:
+        def title(x):
+            print()
+            print(x,"analyis")
+            print('---------------')
+            print()
+        def parse(x):
+            print()
+            print(x,"parsing")
+            print('---')
+            print()
+
         try:
-            G.stats()
+            G.print_grammar()
+            title('LL(1)')
+            G.stats_ll1()
+            parse('LL(1)')
             G.parse(to_parse)
+            title('LR(0)')
+            G.stats_lr0()
+            parse('LR(0)')
+            G.lr0_parse(to_parse)
         except Exception as e:
             print(e)
     return render_template('index.html', input=input,

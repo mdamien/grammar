@@ -7,7 +7,7 @@ from pprint import pprint as pp
 TODO:
 - detect grammar conflicts (LL(1), LR(0),..)
 - LR(0) parse
-- LR(1) - action table
+- LR(1)
 - SLR(1)
 - LALR(1)
 - parse tree + tree traversal with grammar output example
@@ -256,25 +256,33 @@ class Grammar:
         for v in sorted(self.V()):
             print(self.vrules2str(v))
 
-    def stats(self):
-        print()
-        print("STATS")
-        self.print_grammar()
+
+    def stats_ll1(self):
         print("FIRST/FOLLOW table:")
         self.FIRST_FOLLOW_table()
         print("LL(1) parse table:")
         self.print_parse_table()
-        print("LR(0) parse graph:")
+
+    def stats_lr0(self):
+        print("states:")
         states = self.lr0_states()
         self.lr0_pp(states)
-        print()
+        print("table:")
+        self.lr0_table(states)
+
+    def stats(self):
+        self.print_grammar()
+        self.stats_ll1()
+        self.stats_lr0()
 
     ###### LR(0)
 
-    def lr0_closure(self,kernels):
-        state = []
+    def lr0_closure(self,kernels, max_depth=4):
+        if max_depth == 0:
+            return kernels
+        items = {}
         for kernel in kernels:
-            state.append(kernel)
+            items[self.sstate2str(kernel)] = kernel
             R, rule, i = kernel
             right = rule[i:]
             if right:
@@ -282,9 +290,10 @@ class Grammar:
                 if self.is_non_terminal(right0):
                     for rule2 in self.rules[right0]:
                         nq = (right0, rule2,0)
-                        closured = self.lr0_closure([nq])
-                        state += closured
-        return state
+                        closured = self.lr0_closure([nq], max_depth-1)
+                        for it in closured:
+                            items[self.sstate2str(it)] = it
+        return items.values()
 
     def lr0_goto(self, q, X):
         state = []
@@ -378,9 +387,9 @@ class Grammar:
                 if curr in state['origin'] and symbol in state['transition']:
                     return k
 
-        table = [["(top) stack",'stack2','parse','action'],]
+        GOTO = self.lr0_GOTO(states)
 
-        curr_state = 0
+        table = [['state','states stack', "(top) stack",'parse','action'],]
 
         s.append('$')
 
@@ -389,6 +398,12 @@ class Grammar:
 
         try:
             for i in range(20):
+                row = [
+                    ''.join(map(str,stack)),
+                    ''.join(map(str,stack2)),
+                    ''.join(s)]
+                action = "no action"
+                curr_state = stack[-1]
                 s0 = s[0]
                 new_state = find_transition(curr_state, s0)
                 #SHIFT
@@ -396,37 +411,26 @@ class Grammar:
                     stack.append(new_state)
                     stack2.append(s0)
                     s = s[1:]
-                    table.append([
-                        ''.join(map(str,stack)),
-                        ''.join(map(str,stack2)),
-                        ''.join(s),
-                        "shift "+str(new_state)
-                        ])
-                    curr_state = new_state
+                    action = "shift "+str(new_state)
                 else:
                     state_infos = states[curr_state]
-                    pp(state_infos)
                     #REDUCE
                     reduce_items = [it for it in state_infos['state']
                         if is_reduce_item(it)]
-                    print(reduce_items)
                     if len(reduce_items) > 0:
                         if len(reduce_items) > 1:
                             print("WHAT, multiple reduce items", reduce_items)
                         reduce_item = reduce_items[0]
                         for it in reduce_item:
-                            print(it,stack)
                             stack.pop()
                             stack2.pop()
-                        stack.append(4)
-                        curr_state = 4
-                        stack2.append("S")
-                        table.append([
-                            ''.join(map(str,stack)),
-                            ''.join(map(str,stack2)),
-                            ''.join(s),
-                            "reduce "+self.sstate2str(reduce_item)
-                            ])
+                        R, _, _ = reduce_item
+                        print("GOTO",R,"=>", GOTO[R])
+                        stack.append(GOTO[R])
+                        stack2.append(R)
+                        action = "reduce "+self.sstate2str(reduce_item)
+                row.append(action)
+                table.append(row)
         finally:
             print()
             print(tabulate(table[1:],
@@ -434,6 +438,39 @@ class Grammar:
                     stralign="right",
                     tablefmt="fancy_grid"))
             print()
+
+    def lr0_GOTO(self, states):
+        V = self.V()
+        def find_transition(v):
+            for k,x in states.items():
+                if v in x['transition']:
+                    return k
+        GOTO = {v:find_transition(v) for v in V}
+        return GOTO
+
+    def lr0_table(self, states):
+        V = self.V()
+        T = self.T()
+        def find_transition(origin, transition):
+            for k,x in states.items():
+                if transition in x['transition'] and origin in x['origin']:
+                    return k
+        items = sorted(states.items(), key=lambda x:x[1]['N'])
+        symbols = sorted(T) + sorted(V)
+        table = [['item set',]+symbols]
+        for k,v in items:
+            row = [k,]
+            for symb in symbols:
+                r = find_transition(k, symb)
+                if r is not None:
+                    row.append(r)
+                else:
+                    row.append('')
+            table.append(row)
+        print(tabulate(table[1:],
+                headers=table[0],
+                stralign="right",
+                tablefmt="fancy_grid"))
 
     def lr0_pp(self, states):
         items = sorted(states.items(), key=lambda x:x[1]['N'])
@@ -445,12 +482,7 @@ class Grammar:
                 print("   transition",','.join(map(repr,v['transition'])))
 
     def slr1_table(self, lr0_states):
-        V = self.V()
-        def find_transition(v):
-            for k,x in lr0_states.items():
-                if v in x['transition']:
-                    return k,self.state2str(x['state'])
-        GOTO = {v:find_transition(v) for v in V}
+        GOTO = self.lr0_GOTO(lr0_states)
         print("GOTO",GOTO)
         for state in sorted(lr0_states):
             print(state)

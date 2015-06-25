@@ -38,6 +38,11 @@ class TestGrammar(unittest.TestCase):
                 A → a
                 B → a
             """)
+
+        self.G6 = Grammar.from_text("""
+                E → E*B | E+B | B
+                B → 0 | 1
+            """)
     def test_V_T(self):
         G = self.G
         self.assertEqual(len(G.V()),5)
@@ -93,8 +98,11 @@ class TestGrammar(unittest.TestCase):
         states = G.lr0_states()
         self.assertEqual(len(states),6)
 
+        G = self.G6
+        states = G.lr0_states()
         G.lr0_pp(states)
-        G.lr0_parse("((a))")
+        G.lr0_table(states)
+        G.lr0_parse("1+1")
 
         G = self.G5
         states = G.lr0_states()
@@ -111,3 +119,21 @@ class TestGrammar(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+"""
+
+final p13
+E -> OEE | A
+O -> + | *
+A -> N | (E)
+
+*(*NN)N
+
+wikipedia lr0
+E → E*B | E+B | B
+B → 0 | 1
+
+1+1
+
+"""
