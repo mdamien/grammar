@@ -273,6 +273,7 @@ class Grammar:
         print()
         print("action table:")
         self.lr0_full_table(states)
+
     def stats(self):
         self.print_grammar()
         self.stats_ll1()
@@ -533,14 +534,6 @@ class Grammar:
             if len(v['transition']) > 0:
                 print("   transition",','.join(map(repr,v['transition'])))
 
-    def slr1_table(self, lr0_states):
-        GOTO = self.lr0_GOTO(lr0_states)
-        print("GOTO",GOTO)
-        for state in sorted(lr0_states):
-            print(state)
-            item = lr0_states[state]
-            for rule in item['state']:
-                print(rule,end=',\n')
 
 example = """E → TA
 A → +TA | ɛ 

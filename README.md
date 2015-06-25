@@ -1,5 +1,7 @@
 ### grammar
-Implementing Stanford CS143 concepts
+Implementing Stanford CS143 concepts  
+
+Implemented LL(1) and LR(0) (and almost SLR(1))
 
 Tested on `python 3.4`. `pip3 install -r requirements.txt`
 
