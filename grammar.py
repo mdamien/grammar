@@ -267,9 +267,12 @@ class Grammar:
         print("states:")
         states = self.lr0_states()
         self.lr0_pp(states)
+        print()
         print("table:")
         self.lr0_table(states)
-
+        print()
+        print("action table:")
+        self.lr0_full_table(states)
     def stats(self):
         self.print_grammar()
         self.stats_ll1()
@@ -466,6 +469,55 @@ class Grammar:
                     row.append(r)
                 else:
                     row.append('')
+            table.append(row)
+        print(tabulate(table[1:],
+                headers=table[0],
+                stralign="right",
+                tablefmt="fancy_grid"))
+
+    def lr0_full_table(self, states):
+        V = self.V()
+        T = self.T()
+        def find_transition(origin, transition):
+            for k,x in states.items():
+                if transition in x['transition'] and origin in x['origin']:
+                    return k
+
+        def is_reduce_item(item):
+            R, rule, i = item
+            return len(rule) == i
+
+        items = sorted(states.items(), key=lambda x:x[1]['N'])
+        symbols = sorted(T) + ['$'] + sorted(V)
+        table = [['item set',]+symbols]
+        for k,v in items:
+            row = [k,]
+            to_be_filled = None
+            reduce_items = [it for it in v['state'] if is_reduce_item(it)]
+            if len(reduce_items) > 0:
+                to_be_filled = "REDUCE "+ self.state2strstr(reduce_items)
+            for symb_i, symb in enumerate(symbols):
+                cell = None
+                if symb in V:
+                    cell = find_transition(k, symb)
+                else:
+                    if to_be_filled:
+                        if symb_i == 0:
+                            cell = to_be_filled
+                        else:
+                            cell = '---'
+                    elif symb is '$':
+                        for lr0it in v['state']:
+                            R, rule, i = lr0it
+                            if R == "S'":
+                                if i == 1:
+                                    cell = 'acc'
+                                    break
+                    else:
+                        r = find_transition(k, symb)
+                        if r is not None:
+                            cell = "SHIFT "+str(r)
+                row.append(cell)
             table.append(row)
         print(tabulate(table[1:],
                 headers=table[0],

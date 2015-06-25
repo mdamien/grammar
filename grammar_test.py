@@ -101,7 +101,7 @@ class TestGrammar(unittest.TestCase):
         G = self.G6
         states = G.lr0_states()
         G.lr0_pp(states)
-        G.lr0_table(states)
+        G.lr0_full_table(states)
         G.lr0_parse("1+1")
 
         G = self.G5
